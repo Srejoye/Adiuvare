@@ -48,3 +48,17 @@ def test_payload_marks_script_text():
     res = asyncio.run(PayloadSignal().extract(ctx))
     assert res.score == 0.6
 
+
+def test_payload_does_not_flag_normal_select_text():
+    ctx = RequestContext(
+        identity="u1",
+        payload="please select an option",
+        url="/settings",
+        method="POST",
+        headers={},
+        ip="127.0.0.1",
+        endpoint="/settings",
+    )
+
+    res = asyncio.run(PayloadSignal().extract(ctx))
+    assert res.score == 0.0
