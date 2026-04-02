@@ -17,3 +17,32 @@ class Thresholds(BaseModel):
         if not (self.flag <= self.throttle <= self.block):
             raise ValueError("thresholds are out of order")
         return self
+
+
+class RuntimeConfig(BaseModel):
+    audit_db_path: str = ".adiuvare/audit.db"
+    state_db_path: str = ".adiuvare/state.db"
+    observe_only: bool = False
+
+
+class AiConfig(BaseModel):
+    enabled: bool = False
+    mode: str = "off"
+    model: str = "llama3"
+    base_url: str = "http://127.0.0.1:11434"
+
+
+class AdiuvareConfig(BaseModel):
+    weights: SignalWeights = Field(default_factory=SignalWeights)
+    thresholds: Thresholds = Field(default_factory=Thresholds)
+    runtime: RuntimeConfig = Field(default_factory=RuntimeConfig)
+    ai: AiConfig = Field(default_factory=AiConfig)
+
+
+PRESETS = {
+    "balanced": AdiuvareConfig(),
+    "strict": AdiuvareConfig(
+        thresholds=Thresholds(flag=0.20, throttle=0.45, block=0.70),
+        ai=AiConfig(enabled=True, mode="assist"),
+    ),
+}
