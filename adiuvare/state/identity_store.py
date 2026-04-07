@@ -1,4 +1,5 @@
 import time
+import threading
 from dataclasses import dataclass
 
 from cachetools import TTLCache
@@ -15,16 +16,19 @@ class IdentityStore:
     def __init__(self, ttl: int = 300, block_ttl: int = 60) -> None:
         self._block_ttl = block_ttl
         self._windows: TTLCache[str, IdentityWindow] = TTLCache(maxsize=10000, ttl=ttl)
+        self._lock = threading.RLock()
 
     def get(self, identity: str) -> IdentityWindow:
-        win = self._windows.get(identity)
-        if win is None:
-            win = IdentityWindow()
-            self._windows[identity] = win
-        return win
+        with self._lock:
+            win = self._windows.get(identity)
+            if win is None:
+                win = IdentityWindow()
+                self._windows[identity] = win
+            return win
 
     def update(self, identity: str, win: IdentityWindow) -> None:
-        self._windows[identity] = win
+        with self._lock:
+            self._windows[identity] = win
 
     def set_blocked(self, identity: str, seconds: int | float | None = None) -> None:
         win = self.get(identity)
@@ -43,16 +47,17 @@ class IdentityStore:
         self.clear_block(identity)
 
     def is_blocked(self, identity: str) -> bool:
-        win = self._windows.get(identity)
-        if win is None:
-            return False
+        with self._lock:
+            win = self._windows.get(identity)
+            if win is None:
+                return False
 
-        if win.blocked_until <= time.time():
-            win.blocked_until = 0.0
-            self.update(identity, win)
-            return False
+            if win.blocked_until <= time.time():
+                win.blocked_until = 0.0
+                self.update(identity, win)
+                return False
 
-        return True
+            return True
 
     def bump(self, identity: str) -> int:
         win = self.get(identity)

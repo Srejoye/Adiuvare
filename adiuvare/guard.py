@@ -97,4 +97,10 @@ class Guard:
             app.add_middleware(AdiuvareMiddleware, guard=self)
             return
 
+        if framework == "flask":
+            from .integrations.flask import AdiuvareMiddleware
+
+            app.wsgi_app = AdiuvareMiddleware(app.wsgi_app, guard=self)
+            return
+
         raise ValueError(f"unsupported framework: {framework}")
