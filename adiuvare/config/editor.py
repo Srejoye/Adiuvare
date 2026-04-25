@@ -3,6 +3,8 @@ from typing import Any
 
 import yaml
 
+from .schema import PRESETS
+
 
 def merge_sections(path: str | Path, changes: dict[str, Any]) -> dict[str, Any]:
     file_path = Path(path)
@@ -26,3 +28,22 @@ def _merge(base: dict[str, Any], changes: dict[str, Any]) -> None:
             _merge(base[key], val)
         else:
             base[key] = val
+
+
+def starter_config(
+    *,
+    framework: str,
+    instances: str,
+    strictness: str,
+    mode: str,
+    ai_mode: str,
+) -> dict[str, Any]:
+    preset = "strict" if strictness == "critical" else "balanced"
+    cfg = PRESETS[preset].model_copy(deep=True)
+    cfg.runtime.observe_only = mode == "observe"
+    cfg.ai.mode = ai_mode
+    cfg.ai.enabled = ai_mode != "off"
+    cfg.meta.framework = framework
+    cfg.meta.instances = instances
+    cfg.meta.strictness = strictness
+    return cfg.model_dump()

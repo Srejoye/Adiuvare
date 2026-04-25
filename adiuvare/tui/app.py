@@ -89,11 +89,23 @@ class AdiuvareApp(App[None]):
 
     def runtime_snapshot(self) -> dict:
         return {
+            "framework": self.config.meta.framework,
+            "instances": self.config.meta.instances,
+            "strictness": self.config.meta.strictness,
             "ai_mode": self.config.ai.mode,
+            "ai_enabled": self.config.ai.enabled,
+            "ai_model": self.config.ai.model,
             "observe_only": self.config.runtime.observe_only,
             "recent_events": len(self.audit.recent(limit=20)),
             "whitelist_size": 0,
+            "audit_db": self.config.runtime.audit_db_path,
             "state_db": self.config.runtime.state_db_path,
+            "flag_threshold": self.config.thresholds.flag,
+            "throttle_threshold": self.config.thresholds.throttle,
+            "block_threshold": self.config.thresholds.block,
+            "payload_weight": self.config.weights.payload,
+            "behavior_weight": self.config.weights.behavior,
+            "identity_weight": self.config.weights.identity,
         }
 
     def recent_rows(self, limit: int = 40) -> list[dict]:

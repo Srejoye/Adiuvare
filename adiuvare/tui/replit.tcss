@@ -93,6 +93,7 @@ Screen {
 }
 
 #monitor-stream,
+#runtime-profile,
 #runtime-snapshot,
 #runtime-counts,
 #placeholder-copy {
@@ -101,13 +102,18 @@ Screen {
     padding: 1;
 }
 
+#runtime-profile {
+    height: 7;
+    margin-bottom: 1;
+}
+
 #runtime-snapshot {
-    height: 10;
+    height: 11;
     margin-bottom: 1;
 }
 
 #runtime-counts {
-    height: 9;
+    height: 15;
 }
 
 #events-identity-filter,

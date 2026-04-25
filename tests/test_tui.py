@@ -9,8 +9,9 @@ from adiuvare.core.models import AdiuvareEvent
 HAS_TEXTUAL = importlib.util.find_spec("textual") is not None
 
 if HAS_TEXTUAL:
-    from textual.widgets import Button, ContentSwitcher
+    from textual.widgets import Button, ContentSwitcher, Select
     from adiuvare.tui.app import AdiuvareApp
+    from adiuvare.tui.wizard import SetupWizardApp
 
 
 @pytest.fixture
@@ -64,6 +65,15 @@ async def test_monitor_reads_recent_audit_rows(app):
     async with app.run_test() as _pilot:
         table = app.query_one("#monitor-stream")
         assert table.row_count == 1
+
+
+@pytest.mark.asyncio
+async def test_monitor_shows_profile_and_thresholds(app):
+    async with app.run_test() as _pilot:
+        profile = str(app.query_one("#runtime-profile").content)
+        counts = str(app.query_one("#runtime-counts").content)
+        assert "framework: fastapi" in profile
+        assert "block: 0.80" in counts
 
 
 @pytest.mark.asyncio
@@ -143,3 +153,24 @@ async def test_slash_focuses_audit_filter(app):
         await pilot.press("6")
         await pilot.press("/")
         assert app.focused is app.query_one("#audit-identity-filter")
+
+
+@pytest.mark.asyncio
+async def test_setup_wizard_uses_selects_and_writes_full_config(tmp_path):
+    if not HAS_TEXTUAL:
+        pytest.skip("textual not installed")
+    dest = tmp_path / "adiuvare.yaml"
+    app = SetupWizardApp(dest)
+
+    async with app.run_test() as pilot:
+        assert isinstance(app.query_one("#wiz-framework"), Select)
+        assert isinstance(app.query_one("#wiz-strict"), Select)
+        app.query_one("#wiz-ai", Select).value = "assist"
+        app.query_one("#wiz-save", Button).press()
+        await pilot.pause()
+
+    saved = Path(dest).read_text(encoding="utf-8")
+    assert "weights:" in saved
+    assert "thresholds:" in saved
+    assert "framework: fastapi" in saved
+    assert "mode: assist" in saved

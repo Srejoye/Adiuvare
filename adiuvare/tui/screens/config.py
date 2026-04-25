@@ -66,13 +66,24 @@ class ConfigScreen(WorkspaceView):
 
     def footer_status(self) -> str:
         path = self._app().config_path or str(Path("adiuvare.yaml"))
-        return f"config path: {path}"
+        strict = self._app().config.meta.strictness
+        return f"config path: {path} | strictness: {strict}"
 
     def _render_summary(self, note: str) -> None:
+        cfg = self._app().config
         self.query_one("#cfg-summary", Static).update(
-            f"observe only: {self._observe}\n{note}"
+            "\n".join(
+                [
+                    f"framework: {cfg.meta.framework}",
+                    f"strictness: {cfg.meta.strictness}",
+                    f"observe only: {self._observe}",
+                    f"ai mode: {cfg.ai.mode}",
+                    f"flag/throttle/block: {cfg.thresholds.flag:.2f} / {cfg.thresholds.throttle:.2f} / {cfg.thresholds.block:.2f}",
+                    f"state db: {cfg.runtime.state_db_path}",
+                    note,
+                ]
+            )
         )
 
     def _app(self):
         return cast("AdiuvareApp", self.app)
-

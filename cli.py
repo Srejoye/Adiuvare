@@ -7,7 +7,7 @@ from typing import Any
 
 import yaml
 
-from adiuvare.config.editor import merge_sections
+from adiuvare.config.editor import merge_sections, starter_config
 from adiuvare.config.loader import load_config
 from adiuvare.state.audit_log import AuditLog
 
@@ -82,15 +82,13 @@ def _plain_terminal_wizard(dest: Path) -> None:
 
     merge_sections(
         save_path,
-        {
-            "runtime": {"observe_only": mode == "observe"},
-            "ai": {"mode": ai_mode, "enabled": ai_mode != "off"},
-            "meta": {
-                "framework": framework,
-                "instances": instances,
-                "strictness": strictness,
-            },
-        },
+        starter_config(
+            framework=framework,
+            instances=instances,
+            strictness=strictness,
+            mode=mode,
+            ai_mode=ai_mode,
+        ),
     )
 
 
@@ -197,4 +195,3 @@ def _ask(prompt: str, options: list[str], default: str) -> str:
 
 if __name__ == "__main__":
     main()
-

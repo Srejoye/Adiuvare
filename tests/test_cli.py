@@ -14,7 +14,16 @@ def test_plain_wizard_writes_yaml(tmp_path, monkeypatch):
     _plain_terminal_wizard(dest)
     loaded = yaml.safe_load(dest.read_text(encoding="utf-8"))
     assert loaded["runtime"]["observe_only"] is True
+    assert loaded["runtime"]["audit_db_path"] == ".adiuvare/audit.db"
+    assert loaded["runtime"]["state_db_path"] == ".adiuvare/state.db"
     assert loaded["ai"]["mode"] == "off"
+    assert loaded["ai"]["model"] == "llama3"
+    assert loaded["thresholds"]["flag"] == 0.25
+    assert loaded["thresholds"]["throttle"] == 0.55
+    assert loaded["weights"]["payload"] == 0.40
+    assert loaded["meta"]["framework"] == "fastapi"
+    assert loaded["meta"]["instances"] == "single"
+    assert loaded["meta"]["strictness"] == "internal"
 
 
 def test_run_config_set_patches_nested_value(tmp_path, monkeypatch):

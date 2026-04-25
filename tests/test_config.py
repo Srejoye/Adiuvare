@@ -27,6 +27,7 @@ def test_adiuvare_config_builds_with_runtime_and_ai():
     cfg = AdiuvareConfig()
     assert cfg.runtime.audit_db_path == ".adiuvare/audit.db"
     assert cfg.ai.mode == "off"
+    assert cfg.meta.framework == "fastapi"
 
 
 def test_presets_keep_distinct_thresholds():

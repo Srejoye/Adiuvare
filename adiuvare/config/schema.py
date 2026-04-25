@@ -32,11 +32,18 @@ class AiConfig(BaseModel):
     base_url: str = "http://127.0.0.1:11434"
 
 
+class MetaConfig(BaseModel):
+    framework: str = "fastapi"
+    instances: str = "single"
+    strictness: str = "internal"
+
+
 class AdiuvareConfig(BaseModel):
     weights: SignalWeights = Field(default_factory=SignalWeights)
     thresholds: Thresholds = Field(default_factory=Thresholds)
     runtime: RuntimeConfig = Field(default_factory=RuntimeConfig)
     ai: AiConfig = Field(default_factory=AiConfig)
+    meta: MetaConfig = Field(default_factory=MetaConfig)
 
 
 PRESETS = {
