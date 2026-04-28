@@ -5,7 +5,6 @@ from textual.app import ComposeResult
 from textual.containers import Horizontal, Vertical
 from textual.widgets import Static
 
-from ...state.audit_log import AuditLog
 from ..widgets.risk_stream import RiskStream
 from ..workspace import PALETTE, WorkspaceView
 
@@ -28,8 +27,7 @@ class MonitorScreen(WorkspaceView):
         self.refresh_view()
 
     def refresh_view(self) -> None:
-        audit = self._audit()
-        rows = audit.recent(limit=14)
+        rows = self._app().recent_rows(14)
         counts = Counter(str(row.get("verdict", "allow")) for row in rows)
         self.query_one("#monitor-stream", RiskStream).show_events(rows)
         self.query_one("#runtime-profile", Static).update(self._profile_text())
@@ -47,6 +45,7 @@ class MonitorScreen(WorkspaceView):
             f"framework: {snap.get('framework', 'fastapi')}",
             f"instances: {snap.get('instances', 'single')}",
             f"strictness: {snap.get('strictness', 'internal')}",
+            f"backend: {snap.get('backend', 'sqlite')}",
             f"ai mode: {snap.get('ai_mode', 'off')}",
             f"ai model: {snap.get('ai_model', 'llama3')}",
         ]
@@ -61,8 +60,10 @@ class MonitorScreen(WorkspaceView):
         observe = bool(snap.get("observe_only", False))
         recent = int(snap.get("recent_events", 0))
         wl = int(snap.get("whitelist_size", 0))
+        live = bool(snap.get("connected", False))
         lines = [
             "runtime snapshot",
+            f"live link: {live}",
             f"ai mode: {ai_mode}",
             f"ai enabled: {ai_enabled}",
             f"observe only: {observe}",
@@ -95,6 +96,3 @@ class MonitorScreen(WorkspaceView):
 
     def _app(self):
         return cast("AdiuvareApp", self.app)
-
-    def _audit(self) -> AuditLog:
-        return self._app().audit

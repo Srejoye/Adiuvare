@@ -34,6 +34,58 @@ def app(tmp_path):
     return AdiuvareApp(config_path=str(cfg))
 
 
+@pytest.fixture
+def connected_app(tmp_path, monkeypatch):
+    if not HAS_TEXTUAL:
+        pytest.skip("textual not installed")
+
+    cfg = tmp_path / "adiuvare.yaml"
+    cfg.write_text(
+        "\n".join(
+            [
+                "runtime:",
+                f"  audit_db_path: '{(tmp_path / 'audit.db').as_posix()}'",
+                f"  state_db_path: '{(tmp_path / 'state.db').as_posix()}'",
+                "ai:",
+                "  mode: 'off'",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    async def fake_subscribe(self):
+        if False:
+            yield {}
+
+    calls = []
+
+    async def fake_command(self, name, args=None):
+        calls.append((name, args or {}))
+        if name == "get_runtime_snapshot":
+            return {
+                "backend": "redis",
+                "whitelist_size": 2,
+                "recent_events": 1,
+            }
+        return {"ok": True}
+
+    monkeypatch.setattr("adiuvare.tui.app.EventStreamClient.subscribe", fake_subscribe)
+    monkeypatch.setattr("adiuvare.tui.app.EventStreamClient.command", fake_command)
+
+    app = AdiuvareApp(socket_path="demo.sock", config_path=str(cfg))
+    app._stream_rows = [
+        {
+            "identity": "live:user",
+            "endpoint": "/review",
+            "score": 0.91,
+            "verdict": "block",
+            "breakdown": {"payload": 0.91},
+        }
+    ]
+    app._test_calls = calls
+    return app
+
+
 @pytest.mark.asyncio
 async def test_tui_starts_on_monitor(app):
     async with app.run_test() as _pilot:
@@ -65,6 +117,18 @@ async def test_monitor_reads_recent_audit_rows(app):
     async with app.run_test() as _pilot:
         table = app.query_one("#monitor-stream")
         assert table.row_count == 1
+
+
+@pytest.mark.asyncio
+async def test_connected_monitor_reads_live_stream_rows(connected_app):
+    async with connected_app.run_test() as pilot:
+        await pilot.pause()
+        table = connected_app.query_one("#monitor-stream")
+        profile = str(connected_app.query_one("#runtime-profile").content)
+        snapshot = str(connected_app.query_one("#runtime-snapshot").content)
+        assert table.row_count == 1
+        assert "backend: redis" in profile
+        assert "live link: True" in snapshot
 
 
 @pytest.mark.asyncio
@@ -103,6 +167,23 @@ async def test_events_filter_reduces_rows(app):
         await pilot.pause()
         table = app.query_one("#events-table")
         assert table.row_count == 1
+
+
+@pytest.mark.asyncio
+async def test_connected_events_actions_use_runtime_commands(connected_app):
+    async with connected_app.run_test() as pilot:
+        await pilot.pause()
+        await pilot.press("2")
+        connected_app.query_one("#events-confirm", Button).press()
+        connected_app.query_one("#events-whitelist", Button).press()
+        note = connected_app.query_one("#events-note-input")
+        note.value = "keep"
+        connected_app.query_one("#events-note", Button).press()
+        await pilot.pause()
+
+    assert ("confirm_block", {"identity": "live:user"}) in connected_app._test_calls
+    assert ("unblock_whitelist", {"identity": "live:user"}) in connected_app._test_calls
+    assert ("unblock_note", {"identity": "live:user", "note": "keep"}) in connected_app._test_calls
 
 
 @pytest.mark.asyncio

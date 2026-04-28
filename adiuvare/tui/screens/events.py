@@ -67,14 +67,14 @@ class EventsScreen(WorkspaceView):
         who = str(self._selected.get("identity", ""))
         if event.button.id == "events-confirm":
             self._app().confirm_identity(who)
-            self._app().set_footer_status("confirm marker recorded")
+            self._app().set_footer_status("confirm command sent")
         elif event.button.id == "events-whitelist":
             self._app().whitelist_identity(who)
-            self._app().set_footer_status("whitelist marker recorded")
+            self._app().set_footer_status("whitelist command sent")
         elif event.button.id == "events-note":
             note = self.query_one("#events-note-input", Input).value.strip()
             self._app().mark_note(who, note)
-            self._app().set_footer_status("review note saved")
+            self._app().set_footer_status("review note sent")
 
     def refresh_view(self) -> None:
         filt = self.query_one("#events-identity-filter", Input).value.strip().lower()

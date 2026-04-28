@@ -1,3 +1,4 @@
+import asyncio
 from pathlib import Path
 
 from rich.text import Text
@@ -8,6 +9,7 @@ from textual.widgets import Button, ContentSwitcher, Static
 
 from ..config.loader import load_config
 from ..state.audit_log import AuditLog
+from ..state.event_stream import EventStreamClient
 from ..config.editor import merge_sections
 from ..config.watcher import ConfigWatcher
 from .screens.analyst import AnalystScreen
@@ -39,9 +41,13 @@ class AdiuvareApp(App[None]):
         self.config_path = config_path
         self.config = load_config(config_path)
         self.audit = AuditLog(self.config.runtime.audit_db_path)
+        self.client = EventStreamClient(socket_path)
         self._view = "monitor"
         self._footer_note = "runtime shell"
         self._watcher = ConfigWatcher(config_path) if config_path else None
+        self._runtime_cache: dict | None = None
+        self._stream_rows: list[dict] = []
+        self._tasks: list[asyncio.Task] = []
 
     def compose(self) -> ComposeResult:
         with Vertical(id="app-shell"):
@@ -67,7 +73,15 @@ class AdiuvareApp(App[None]):
 
     def on_mount(self) -> None:
         self._sync_view()
+        if self.connected:
+            self._tasks.append(asyncio.create_task(self._stream_loop()))
+            self._tasks.append(asyncio.create_task(self._refresh_runtime()))
         self.set_interval(1.0, self._tick)
+
+    async def on_unmount(self) -> None:
+        for task in self._tasks:
+            task.cancel()
+        self._tasks.clear()
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         button_id = event.button.id or ""
@@ -88,7 +102,7 @@ class AdiuvareApp(App[None]):
         self._sync_footer(self._active_page())
 
     def runtime_snapshot(self) -> dict:
-        return {
+        snap = {
             "framework": self.config.meta.framework,
             "instances": self.config.meta.instances,
             "strictness": self.config.meta.strictness,
@@ -96,10 +110,13 @@ class AdiuvareApp(App[None]):
             "ai_enabled": self.config.ai.enabled,
             "ai_model": self.config.ai.model,
             "observe_only": self.config.runtime.observe_only,
-            "recent_events": len(self.audit.recent(limit=20)),
+            "recent_events": len(self._stream_rows) if self._stream_rows else len(self.audit.recent(limit=20)),
             "whitelist_size": 0,
             "audit_db": self.config.runtime.audit_db_path,
             "state_db": self.config.runtime.state_db_path,
+            "backend": self.config.runtime.backend,
+            "connected": self.connected,
+            "stream_path": self.socket_path,
             "flag_threshold": self.config.thresholds.flag,
             "throttle_threshold": self.config.thresholds.throttle,
             "block_threshold": self.config.thresholds.block,
@@ -107,8 +124,13 @@ class AdiuvareApp(App[None]):
             "behavior_weight": self.config.weights.behavior,
             "identity_weight": self.config.weights.identity,
         }
+        if self._runtime_cache:
+            snap.update(self._runtime_cache)
+        return snap
 
     def recent_rows(self, limit: int = 40) -> list[dict]:
+        if self._stream_rows:
+            return self._stream_rows[:limit]
         return self.audit.recent(limit=limit)
 
     def recent_by_identity(self, identity: str, limit: int = 40) -> list[dict]:
@@ -122,12 +144,21 @@ class AdiuvareApp(App[None]):
         self.audit.write_patch("patch_config", changes)
 
     def mark_note(self, identity: str, note: str) -> None:
+        if self.connected:
+            self.run_worker(self._send_command("unblock_note", {"identity": identity, "note": note}), exclusive=False)
+            return
         self.audit.write_patch("unblock_note", {"identity": identity, "note": note})
 
     def whitelist_identity(self, identity: str) -> None:
+        if self.connected:
+            self.run_worker(self._send_command("unblock_whitelist", {"identity": identity}), exclusive=False)
+            return
         self.audit.write_patch("unblock_whitelist", {"identity": identity})
 
     def confirm_identity(self, identity: str) -> None:
+        if self.connected:
+            self.run_worker(self._send_command("confirm_block", {"identity": identity}), exclusive=False)
+            return
         self.audit.write_patch("confirm_block", {"identity": identity})
 
     def _sync_view(self) -> None:
@@ -156,3 +187,39 @@ class AdiuvareApp(App[None]):
             self.config = load_config(self._watcher.path)
             self._active_page().refresh_view()
             self.set_footer_status("config changed on disk")
+
+    async def _send_command(self, name: str, args: dict) -> None:
+        try:
+            res = await self.client.command(name, args)
+        except Exception:
+            self.set_footer_status("runtime command failed")
+            return
+
+        if name == "get_runtime_snapshot":
+            self._runtime_cache = res
+        else:
+            self.set_footer_status("runtime command sent")
+            await self._refresh_runtime()
+        self._active_page().refresh_view()
+
+    async def _refresh_runtime(self) -> None:
+        if not self.connected:
+            return
+        try:
+            self._runtime_cache = await self.client.command("get_runtime_snapshot", {})
+        except Exception:
+            return
+        self._active_page().refresh_view()
+
+    async def _stream_loop(self) -> None:
+        if not self.connected:
+            return
+        try:
+            async for row in self.client.subscribe():
+                if not isinstance(row, dict):
+                    continue
+                self._stream_rows.insert(0, row)
+                del self._stream_rows[80:]
+                self._active_page().refresh_view()
+        except Exception:
+            self.set_footer_status("stream link dropped")

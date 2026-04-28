@@ -4,7 +4,7 @@ import sys
 import types
 
 from adiuvare.core.models import AdiuvareEvent
-from adiuvare.state.event_stream import RedisEventStream, UnixSocketEventStream
+from adiuvare.state.event_stream import EventStreamClient, RedisEventStream, UnixSocketEventStream
 
 
 def test_stream_replays_recent_event_to_new_client(tmp_path):
@@ -89,6 +89,58 @@ def test_stream_command_handler_still_works(tmp_path):
         stream.set_command_handler(fake_cmd)
         res = await stream.command("ping", {"ok": True})
         assert res == {"name": "ping", "args": {"ok": True}}
+
+    asyncio.run(run())
+
+
+def test_event_stream_client_subscribes_to_live_rows(tmp_path):
+    async def run():
+        stream = UnixSocketEventStream(sock_path=tmp_path / "sub.sock")
+        await stream.start()
+        try:
+            client = EventStreamClient(stream.path)
+            rows = []
+
+            async def listen_once():
+                async for row in client.subscribe():
+                    rows.append(row)
+                    break
+
+            task = asyncio.create_task(listen_once())
+            await asyncio.sleep(0.1)
+            await stream.emit(
+                AdiuvareEvent(
+                    identity="u3",
+                    endpoint="/sub",
+                    score=0.77,
+                    verdict="throttle",
+                    breakdown={"payload": 0.77},
+                )
+            )
+            await asyncio.wait_for(task, timeout=1.0)
+            assert rows[0]["identity"] == "u3"
+            assert rows[0]["verdict"] == "throttle"
+        finally:
+            await stream.stop()
+
+    asyncio.run(run())
+
+
+def test_event_stream_client_runs_remote_command(tmp_path):
+    async def run():
+        stream = UnixSocketEventStream(sock_path=tmp_path / "rpc.sock")
+
+        async def fake_cmd(name: str, args: dict):
+            return {"name": name, "args": args}
+
+        stream.set_command_handler(fake_cmd)
+        await stream.start()
+        try:
+            client = EventStreamClient(stream.path)
+            res = await client.command("ping", {"ok": True})
+            assert res == {"name": "ping", "args": {"ok": True}}
+        finally:
+            await stream.stop()
 
     asyncio.run(run())
 
