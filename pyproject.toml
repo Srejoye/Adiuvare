@@ -1,6 +1,7 @@
 [project]
 name = "adiuvare"
 version = "0.1.0"
+description = "In-process request security for Python APIs"
 requires-python = ">=3.11"
 dependencies = [
   "pydantic>=2.0",
@@ -17,10 +18,24 @@ tui = [
   "rich",
   "textual",
 ]
+redis = [
+  "redis>=5.0",
+]
 
 [project.scripts]
 adv = "cli:main"
 
 [build-system]
-requires = ["setuptools>=68"]
+requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.package-data]
+adiuvare = [
+  "vendor/*.dll",
+  "vendor/*.so",
+  "vendor/*.dylib",
+  "vendor/libinjection_src/*",
+]
