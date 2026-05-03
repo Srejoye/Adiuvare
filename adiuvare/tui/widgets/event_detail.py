@@ -13,6 +13,7 @@ class EventDetail(Static):
             "event detail",
             f"identity: {event.get('identity', '?')}",
             f"endpoint: {event.get('endpoint', '?')}",
+            f"ip: {event.get('ip', '-') or '-'}",
             f"verdict: {event.get('verdict', 'allow')}",
             "",
             "signal detail",
