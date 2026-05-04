@@ -1,4 +1,6 @@
 class WhitelistStore:
+    """Track explicit allowlisted identities and manually banned IPs."""
+
     def __init__(self) -> None:
         self._ids: set[str] = set()
         self._banned_ips: set[str] = set()

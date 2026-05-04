@@ -25,6 +25,8 @@ from .workspace import PALETTE, WorkspaceView
 
 
 class AdiuvareApp(App[None]):
+    """Drive the multi-screen operator console against a live runtime or cached local audit data."""
+
     CSS_PATH = Path(__file__).with_name("replit.tcss")
     BINDINGS = [
         Binding("1", "switch_view('monitor')", show=False),
@@ -250,6 +252,8 @@ class AdiuvareApp(App[None]):
         self.audit.write_patch("unban_ip", {"ip": ip})
 
     async def get_analysis_report(self, window_days: int = 7) -> dict:
+        """Return the analysis report, falling back to local audit summarization when needed."""
+
         window = f"{max(1, int(window_days))}d"
         if self.connected:
             try:
@@ -263,6 +267,8 @@ class AdiuvareApp(App[None]):
         return report
 
     async def ask_ai_analyst(self, question: str) -> dict:
+        """Answer one operator question with runtime AI when available and local analysis otherwise."""
+
         if self.connected:
             try:
                 result = await self.client.command("ask_ai_analyst", {"question": question, "window": "7d"})

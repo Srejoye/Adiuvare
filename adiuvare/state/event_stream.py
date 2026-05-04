@@ -53,6 +53,8 @@ async def _pubsub_rows(pubsub: Any):
 
 
 class UnixSocketEventStream:
+    """Broadcast recent events and runtime commands over a local socket stream."""
+
     def __init__(
         self,
         name: str = "adiuvare",
@@ -76,6 +78,8 @@ class UnixSocketEventStream:
         self._port = 0
 
     async def start(self) -> None:
+        """Start the local stream server and write a TCP marker when unix sockets are unavailable."""
+
         if self._server is not None:
             return
 
@@ -226,6 +230,8 @@ class UnixSocketEventStream:
 
 
 class RedisEventStream:
+    """Mirror the local event stream contract on top of Redis pubsub and a replay list."""
+
     def __init__(self, project: str, redis_url: str) -> None:
         base = Path(os.getenv("TEMP", "/tmp"))
         tail = f"{project}-{os.getpid()}.sock"
@@ -342,10 +348,14 @@ class RedisEventStream:
 
 
 class EventStreamClient:
+    """Talk to either the local socket stream or the Redis-backed runtime marker."""
+
     def __init__(self, path: str | Path | None) -> None:
         self.path = str(path) if path else None
 
     async def command(self, name: str, args: dict | None = None) -> dict[str, Any]:
+        """Send one runtime command through whichever stream backend the marker points to."""
+
         meta = self._conn_meta()
         if isinstance(meta, dict) and meta.get("mode") == "redis":
             return await self._command_redis(meta, name, args)
@@ -370,6 +380,8 @@ class EventStreamClient:
                 pass
 
     async def subscribe(self):
+        """Yield replay rows first, then continue with the live stream."""
+
         meta = self._conn_meta()
         if isinstance(meta, dict) and meta.get("mode") == "redis":
             async for row in self._subscribe_redis(meta):

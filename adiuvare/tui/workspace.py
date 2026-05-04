@@ -55,6 +55,8 @@ SIGNAL_COLORS = {
 
 
 class WorkspaceView(Container):
+    """Provide the shared focus and footer conventions for each TUI screen."""
+
     DEFAULT_CSS = """
     WorkspaceView {
         width: 1fr;

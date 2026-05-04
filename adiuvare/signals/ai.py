@@ -44,6 +44,8 @@ def _parse_json_response(raw: str) -> dict:
 
 
 class AISignal(SoftSignal):
+    """Ask an Ollama-style endpoint for a second opinion on suspicious requests."""
+
     name = "ai"
     weight = 0.05
 
@@ -65,6 +67,12 @@ class AISignal(SoftSignal):
         return await self.review(ctx, 0.0)
 
     async def review(self, ctx: RequestContext, prior_score: float) -> SignalResult:
+        """Map the model verdict to a bounded additive score and keep failures soft.
+
+        Timeouts and endpoint errors stay non-fatal so request inspection can keep
+        going without AI.
+        """
+
         if ctx.snapshot is None or ctx.snapshot.ai_mode == "off":
             return SignalResult(score=0.0, reason="ai_off")
 

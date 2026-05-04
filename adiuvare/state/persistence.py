@@ -7,6 +7,8 @@ from .whitelist import WhitelistStore
 
 
 def init_state_db(db_path: str | Path) -> None:
+    """Create or upgrade the local state tables used for identity and operator state."""
+
     schema = Path(__file__).with_name("schema.sql").read_text()
     with sqlite3.connect(db_path) as conn:
         conn.executescript(schema)
@@ -26,6 +28,8 @@ def init_state_db(db_path: str | Path) -> None:
 
 
 def save_identity_state(db_path: str | Path, id_store: IdentityStore) -> None:
+    """Persist every live identity window into the local state database."""
+
     with sqlite3.connect(db_path) as conn:
         for identity, win in id_store.items():
             conn.execute(
@@ -52,6 +56,8 @@ def save_identity_state(db_path: str | Path, id_store: IdentityStore) -> None:
 
 
 def save_whitelist_state(db_path: str | Path, wl: WhitelistStore) -> None:
+    """Persist allowlisted identities and banned IPs as a full snapshot."""
+
     with sqlite3.connect(db_path) as conn:
         conn.execute("delete from whitelist_state")
         conn.execute("delete from banned_ip_state")
@@ -69,6 +75,8 @@ def save_whitelist_state(db_path: str | Path, wl: WhitelistStore) -> None:
 
 
 def load_identity_state(db_path: str | Path, id_store: IdentityStore) -> None:
+    """Hydrate the in-memory identity store from the local state database if it exists."""
+
     db_path = Path(db_path)
     if not db_path.exists():
         return
@@ -106,6 +114,8 @@ def load_identity_state(db_path: str | Path, id_store: IdentityStore) -> None:
 
 
 def load_whitelist_state(db_path: str | Path, wl: WhitelistStore) -> None:
+    """Hydrate allowlisted identities and banned IPs from the local state database."""
+
     db_path = Path(db_path)
     if not db_path.exists():
         return
@@ -126,6 +136,8 @@ def checkpoint_state(
     id_store: IdentityStore,
     wl: WhitelistStore | None = None,
 ) -> None:
+    """Persist identity state and optional operator state in one call."""
+
     init_state_db(db_path)
     save_identity_state(db_path, id_store)
     if wl is not None:
@@ -138,6 +150,8 @@ async def start_checkpoint_loop(
     wl: WhitelistStore | None = None,
     interval_secs: int = 60,
 ) -> None:
+    """Periodically checkpoint in-memory state until the task is cancelled."""
+
     while True:
         await asyncio.sleep(interval_secs)
         checkpoint_state(db_path, id_store, wl)

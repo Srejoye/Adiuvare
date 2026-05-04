@@ -37,6 +37,8 @@ from .state.whitelist import WhitelistStore
 
 
 class Guard:
+    """Own the configured signals, state stores, runtime stream, and framework hooks for one app instance."""
+
     def __init__(
         self,
         preset: str = "balanced",
@@ -99,6 +101,8 @@ class Guard:
         soft_signals: list | None = None,
         hard_signals: list | None = None,
     ):
+        """Build a guard from an explicit config file path."""
+
         return cls(
             preset=preset,
             config_path=config_path,
@@ -115,6 +119,8 @@ class Guard:
         soft_signals: list | None = None,
         hard_signals: list | None = None,
     ):
+        """Build a guard and attach the right middleware based on the app object."""
+
         guard = cls(
             preset=preset,
             config_path=config_path,
@@ -129,6 +135,11 @@ class Guard:
         return guard
 
     async def inspect(self, ctx: RequestContext, *, trackB: bool = True):
+        """Run Track A first, then optional Track B scoring, streaming, and audit writes.
+
+        A failed Track A gate short-circuits before any Track B work happens.
+        """
+
         if ctx.snapshot is None:
             ctx.snapshot = self._cfg_snap
 
@@ -168,6 +179,8 @@ class Guard:
         confidence: float,
         fingerprint: str = "",
     ) -> None:
+        """Record one sink-side detection so operator history can show how it was triggered."""
+
         self._last_sink = {
             "statement": statement,
             "normalised": normalised,
@@ -183,9 +196,13 @@ class Guard:
         self._id_store.apply_score(who, 0.85)
 
     def checkpoint(self) -> None:
+        """Persist the current identity and operator state snapshot."""
+
         checkpoint_state(self._state_DBpath, self._id_store, self._wl)
 
     async def startbgtasks(self) -> None:
+        """Restore state, start the event stream, and launch periodic checkpoints once."""
+
         if self._bg_started:
             return
 
@@ -198,6 +215,8 @@ class Guard:
         self._bg_started = True
 
     async def ensure_started(self) -> None:
+        """Start background runtime tasks exactly once even under concurrent callers."""
+
         if self._bg_started:
             return
         if self._bg_lock is None:
@@ -208,6 +227,8 @@ class Guard:
             await self.startbgtasks()
 
     async def shutdown(self) -> None:
+        """Stop background tasks, checkpoint state, and close the active stream backend."""
+
         if self._bg_task is not None:
             self._bg_task.cancel()
             with contextlib.suppress(asyncio.CancelledError):
@@ -224,6 +245,12 @@ class Guard:
         payload: dict | str | None = None,
         context: dict[str, Any] | None = None,
     ):
+        """Build a request context from SDK-style inputs and run the normal inspection flow.
+
+        Dict payloads are JSON-encoded first, and a route snapshot is inferred from
+        the supplied path when you do not pass one explicitly.
+        """
+
         ctxdata = context or {}
         route_cfg = dict(ctxdata.get("route_cfg") or {})
         if "path" in ctxdata and not route_cfg:
@@ -259,6 +286,8 @@ class Guard:
         return asyncio.run(self.check(identity, payload=payload, context=context))
 
     def runtimesnapshot(self) -> dict[str, Any]:
+        """Return the live runtime state the CLI, TUI, and stream commands consume."""
+
         recent = self._stream.recent() if hasattr(self._stream, "recent") else []
         monitored_identities = sorted(
             identity
@@ -298,6 +327,12 @@ class Guard:
         }
 
     async def handlestreamcmd(self, name: str, args: dict[str, Any]) -> dict[str, Any]:
+        """Handle the runtime command surface shared by the CLI and TUI.
+
+        These commands mutate live state, record control-plane history, and return
+        small JSON-friendly payloads for remote callers.
+        """
+
         if name == "get_runtime_snapshot":
             return self.runtimesnapshot()
 
@@ -447,6 +482,8 @@ class Guard:
         raise ValueError(f"unknown stream command: {name}")
 
     def policy(self, name: str, **overrides: Any):
+        """Apply a named route policy, then layer any explicit overrides on top."""
+
         pol = self.policies.get(name)
         if pol is None:
             raise ValueError(f"unknown policy: {name}")
@@ -459,6 +496,8 @@ class Guard:
         trackB: bool = True,
         sink_mode: str = "off",
     ):
+        """Attach inline route policy metadata to an endpoint function."""
+
         def deco(fn):
             cfg = {
                 "sensitivity": sensitivity,
@@ -477,6 +516,8 @@ class Guard:
         return deco
 
     def exempt(self):
+        """Mark a route as exempt from Adiuvare request inspection."""
+
         def deco(fn):
             @wraps(fn)
             async def wrap(*args, **kwargs):
@@ -488,6 +529,8 @@ class Guard:
         return deco
 
     def configure_routes(self, routes: dict[str, Any]):
+        """Register saved route configuration and seed the route overview cache."""
+
         self._route_cfg.update(routes)
         for path, saved in routes.items():
             if isinstance(saved, dict):
@@ -495,6 +538,8 @@ class Guard:
         return self
 
     def use(self, app: Any, framework: str = "fastapi") -> None:
+        """Attach the guard to the selected web framework."""
+
         if framework == "fastapi":
             from .integrations.fastapi import AdiuvareMiddleware
 
@@ -533,6 +578,12 @@ class Guard:
         )
 
     async def analysis_report(self, *, window: str = "7d", limit: int = 500) -> dict[str, Any]:
+        """Build the operator report, then let AI replace parts of it when available.
+
+        The local report is always produced first so callers still get a useful
+        payload when the model is off, slow, or returns partial data.
+        """
+
         days = self._window_days(window)
         rows = self._audit.window(days=days, limit=limit)
         runtime = self.runtimesnapshot()
@@ -575,6 +626,8 @@ class Guard:
         window: str = "7d",
         limit: int = 500,
     ) -> dict[str, Any]:
+        """Answer one operator question with AI when possible and a local fallback otherwise."""
+
         days = self._window_days(window)
         rows = self._audit.window(days=days, limit=limit)
         runtime = self.runtimesnapshot()
@@ -630,6 +683,8 @@ class Guard:
                 sig._id_store = store
 
     def routecfg(self, path: str, endpoint=None) -> dict[str, Any]:
+        """Resolve the effective route config from saved config and decorator metadata."""
+
         cfg = {}
         saved = self._route_cfg.get(path)
         if isinstance(saved, dict):
@@ -647,6 +702,8 @@ class Guard:
         return cfg
 
     def routesnap(self, route_cfg: dict[str, Any] | None):
+        """Return a request snapshot with any route-level AI mode override applied."""
+
         if not route_cfg:
             return self._cfg_snap
 
@@ -676,6 +733,8 @@ class Guard:
             return 7
 
     def routeoverview(self) -> list[dict[str, Any]]:
+        """Return the stable route summary used by the TUI Signals screen."""
+
         for path, saved in self._route_cfg.items():
             if isinstance(saved, dict) and path not in self._route_overview:
                 self._remember_route(path, self._expand_routecfg(saved), saved=saved)

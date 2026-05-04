@@ -7,6 +7,8 @@ from cachetools import TTLCache
 
 @dataclass
 class IdentityWindow:
+    """Track rolling per-identity state used by behavior, blocking, and monitored mode."""
+
     seen: int = 0
     score_ewma: float = 0.0
     blocked_until: float = 0.0
@@ -15,6 +17,8 @@ class IdentityWindow:
 
 
 class IdentityStore:
+    """Keep short-lived identity windows in memory and apply block or monitor state."""
+
     def __init__(self, ttl: int = 300, block_ttl: int = 60) -> None:
         self._block_ttl = block_ttl
         self._windows: TTLCache[str, IdentityWindow] = TTLCache(maxsize=10000, ttl=ttl)
@@ -72,6 +76,8 @@ class IdentityStore:
         return win.seen
 
     def apply_score(self, identity: str, score: float, alpha: float = 0.35) -> IdentityWindow:
+        """Blend the new score into EWMA and consume one monitored request if active."""
+
         win = self.get(identity)
         if win.score_ewma == 0.0:
             win.score_ewma = score
@@ -90,6 +96,8 @@ class IdentityStore:
         requests: int = 20,
         multiplier: float = 1.2,
     ) -> IdentityWindow:
+        """Mark an identity for tighter scoring over the next few requests."""
+
         win = self.get(identity)
         win.monitored_remaining = max(0, int(requests))
         win.monitored_multiplier = max(1.0, float(multiplier))
@@ -109,6 +117,8 @@ class IdentityStore:
 
 
 class ThreadSafeIdentityStore(IdentityStore):
+    """Wrap IdentityStore with an extra lock for threaded WSGI request handling."""
+
     def __init__(self, ttl: int = 300, block_ttl: int = 60) -> None:
         super().__init__(ttl=ttl, block_ttl=block_ttl)
         self._thread = threading.RLock()

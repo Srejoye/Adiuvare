@@ -4,12 +4,16 @@ from pydantic import BaseModel, Field, model_validator
 
 
 class SignalWeights(BaseModel):
+    """Hold the configurable weights for the signal families you can tune."""
+
     payload: float = Field(default=0.40, ge=0.0, le=1.0)
     behavior: float = Field(default=0.35, ge=0.0, le=1.0)
     identity: float = Field(default=0.25, ge=0.0, le=1.0)
 
 
 class Thresholds(BaseModel):
+    """Define the score cutoffs for flag, throttle, and block."""
+
     flag: float = Field(default=0.25, ge=0.0, le=1.0)
     throttle: float = Field(default=0.55, ge=0.0, le=1.0)
     block: float = Field(default=0.80, ge=0.0, le=1.0)
@@ -22,6 +26,8 @@ class Thresholds(BaseModel):
 
 
 class RuntimeConfig(BaseModel):
+    """Collect the runtime backend and stateful operator defaults."""
+
     backend: Literal["memory", "sqlite", "redis"] = "sqlite"
     audit_db_path: str = ".adiuvare/audit.db"
     state_db_path: str = ".adiuvare/state.db"
@@ -32,6 +38,8 @@ class RuntimeConfig(BaseModel):
 
 
 class AiConfig(BaseModel):
+    """Describe how request-time AI review should reach the model endpoint."""
+
     enabled: bool = False
     mode: str = "off"
     model: str = "llama3"
@@ -41,12 +49,16 @@ class AiConfig(BaseModel):
 
 
 class MetaConfig(BaseModel):
+    """Store setup metadata and the current strictness profile."""
+
     framework: str = "fastapi"
     instances: str = "single"
     strictness: str = "internal"
 
 
 class AdiuvareConfig(BaseModel):
+    """Collect the config sections loaded from presets, file, and env."""
+
     weights: SignalWeights = Field(default_factory=SignalWeights)
     thresholds: Thresholds = Field(default_factory=Thresholds)
     runtime: RuntimeConfig = Field(default_factory=RuntimeConfig)

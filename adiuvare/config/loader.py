@@ -13,6 +13,8 @@ def find_config_file(
     include_home: bool = True,
     use_env: bool = True,
 ) -> Path | None:
+    """Find the nearest adiuvare.yaml, optionally honoring env and home fallbacks."""
+
     if use_env:
         env_path = os.getenv("ADIUVARE_CONFIG")
         if env_path:
@@ -41,6 +43,8 @@ def find_config_file(
 
 
 def load_config(path: str | Path | None = None, preset: str = "balanced") -> AdiuvareConfig:
+    """Merge the chosen preset, file values, and env overrides into one validated config."""
+
     base = PRESETS[preset].model_copy(deep=True).model_dump()
     data = {}
 
@@ -57,6 +61,8 @@ def load_config(path: str | Path | None = None, preset: str = "balanced") -> Adi
 
 
 def build_snapshot(cfg: AdiuvareConfig) -> ConfigSnapshot:
+    """Flatten the live scoring fields into the snapshot signals read."""
+
     return ConfigSnapshot(
         payload_weight=cfg.weights.payload,
         behavior_weight=cfg.weights.behavior,

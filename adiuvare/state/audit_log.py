@@ -6,6 +6,8 @@ from ..core.models import AdiuvareEvent
 
 
 class AuditLog:
+    """Write scored events and control-plane patches into the local SQLite audit store."""
+
     def __init__(self, db_path: str | Path) -> None:
         self._db_path = str(db_path)
         self._init_db()
@@ -16,6 +18,8 @@ class AuditLog:
             conn.executescript(schema)
 
     def write(self, event: AdiuvareEvent) -> None:
+        """Persist one event, copying its IP into detail when older readers expect it there."""
+
         detail = dict(event.detail)
         if event.ip and not detail.get("ip"):
             detail["ip"] = event.ip
@@ -99,6 +103,8 @@ class AuditLog:
             conn.commit()
 
     def history(self, limit: int = 50) -> list[dict]:
+        """Return recent control-plane patches in reverse chronological order."""
+
         with sqlite3.connect(self._db_path) as conn:
             rows = conn.execute(
                 """

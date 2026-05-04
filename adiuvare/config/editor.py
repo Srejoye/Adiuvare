@@ -7,6 +7,8 @@ from .schema import PRESETS
 
 
 def merge_sections(path: str | Path, changes: dict[str, Any]) -> dict[str, Any]:
+    """Merge nested changes into the YAML file without replacing untouched sections."""
+
     file_path = Path(path)
     raw = _read_yaml(file_path)
     _merge(raw, changes)
@@ -40,6 +42,8 @@ def starter_config(
     ai_model: str = "llama3",
     ai_api_key: str | None = None,
 ) -> dict[str, Any]:
+    """Build the initial config payload used by the setup flows."""
+
     preset = "strict" if strictness == "critical" else "balanced"
     cfg = PRESETS[preset].model_copy(deep=True)
     cfg.runtime.observe_only = mode == "observe"
