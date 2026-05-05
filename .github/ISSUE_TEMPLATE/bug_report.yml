@@ -1,0 +1,69 @@
+name: Bug report
+description: Report a runtime, integration, CLI, or persistence bug
+title: "[Bug]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug.
+
+        Please make this as concrete as you can. Repro steps and real output help much more than a broad summary.
+  - type: textarea
+    id: summary
+    attributes:
+      label: What went wrong?
+      description: Describe the bug in plain language.
+      placeholder: A monitored identity is not being elevated on the next request after unblock + monitor.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      description: List the smallest set of steps that reproduces the problem.
+      placeholder: |
+        1. Run adv init --no-tui
+        2. Start the app with Guard.from_config(...)
+        3. Open the TUI and select ...
+        4. Observe ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect instead?
+      placeholder: The selected IP should become banned immediately and the next matching request should be blocked.
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant output
+      description: Paste tracebacks, CLI output, or test failures here.
+      render: text
+  - type: input
+    id: python
+    attributes:
+      label: Python version
+      placeholder: "3.11.9"
+  - type: input
+    id: install
+    attributes:
+      label: Install path
+      description: Say how you installed Adiuvare.
+      placeholder: pip install . / pip install -e .[tui] / local source checkout
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Runtime / pipeline
+        - Integration (FastAPI / Flask / Django)
+        - CLI
+        - TUI
+        - Audit / persistence
+        - Docs
+        - Other
+    validations:
+      required: true
+

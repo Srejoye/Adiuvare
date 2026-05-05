@@ -118,6 +118,15 @@ status` or `python cli.py init --no-tui`.
 
 More detail: [docs/installation.md](docs/installation.md)
 
+## License
+
+Adiuvare is released under the Apache License 2.0.
+
+Please read [LICENSE](LICENSE) before using, copying, modifying, or
+redistributing the code. If you plan to build on top of it, ship it inside a
+product, or publish a fork, make sure you understand the attribution and
+redistribution terms first.
+
 ## Quick start
 
 Generate a config:

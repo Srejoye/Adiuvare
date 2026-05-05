@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Read the contributing guide
+    url: https://github.com/0-Shimanshu/ADIUVARE/blob/main/CONTRIBUTING.md
+    about: Check scope, testing, signal, and TUI contribution rules before opening an issue.
+  - name: Read the operator docs
+    url: https://github.com/0-Shimanshu/ADIUVARE/blob/main/docs/operator/tui.md
+    about: TUI questions and expected screen behavior are documented here.

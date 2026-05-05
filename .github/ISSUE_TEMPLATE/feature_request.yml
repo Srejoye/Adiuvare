@@ -1,0 +1,36 @@
+name: Feature request
+description: Suggest a focused improvement that fits the current project scope
+title: "[Feature]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please keep feature requests concrete.
+
+        If the request changes the shape of the project, explain the tradeoff clearly so we can decide whether it fits Adiuvare before anyone builds it.
+  - type: textarea
+    id: request
+    attributes:
+      label: What would you like to add or change?
+      placeholder: Add an operator shortcut to jump from Events to the matching Audit row.
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve?
+      placeholder: Reviewing a flagged event often requires switching to Audit and manually refinding the row.
+    validations:
+      required: true
+  - type: textarea
+    id: shape
+    attributes:
+      label: Suggested shape
+      description: Keep this to the smallest useful version.
+      placeholder: Add a keybinding in Events that opens Audit with the same identity prefiltered.
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      placeholder: I tried using the existing filter flow, but it takes multiple steps and loses context.
+

@@ -1,0 +1,64 @@
+name: Signal proposal
+description: Propose a new hard signal, soft signal, or pattern expansion
+title: "[Signal]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        New signals need a clear reason to exist.
+
+        Please include either a verified source or a concrete reproducer with proof that the signal catches something real without dragging performance or flooding scoring with overlap.
+
+        Possible future signal dependencies can include tools like rebuff, llm-guard, detoxify, presidio, detect-secrets, langdetect, or GeoIP2. Listing one of those is not enough by itself. The proposal still needs to show why it fits Adiuvare and how it will be tested.
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed signal or pattern change
+      placeholder: Add a pattern expansion to PayloadSignal for encoded boolean tautology probes in query fragments.
+    validations:
+      required: true
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Type
+      options:
+        - Soft signal
+        - Hard signal
+        - Expand an existing signal
+        - Not sure
+    validations:
+      required: true
+  - type: textarea
+    id: reasoning
+    attributes:
+      label: Why should this exist?
+      description: Explain the threat model or operator value.
+      placeholder: This catches a known SQLi probe shape that slips past simpler pattern matching.
+    validations:
+      required: true
+  - type: textarea
+    id: source
+    attributes:
+      label: Source or proof
+      description: Link a primary source, a mature rule set, a framework reference, or show a reproducer and tests you would add.
+      placeholder: |
+        - Source: OWASP / vendor advisory / framework reference
+        - Or reproducer: sample payload + expected score / block behavior
+    validations:
+      required: true
+  - type: textarea
+    id: perf
+    attributes:
+      label: Performance and overlap
+      description: Say how this avoids slowing trackA or diluting trackB with near-duplicate logic.
+      placeholder: This belongs in the existing payload signal and reuses the same normalization path instead of adding another overlapping soft signal.
+    validations:
+      required: true
+  - type: textarea
+    id: tests
+    attributes:
+      label: Test shape
+      description: Describe the cases that should pass if this lands.
+      placeholder: One hostile payload should fire, one nearby normal payload should stay calm, and one boundary case should remain bounded.
+    validations:
+      required: true

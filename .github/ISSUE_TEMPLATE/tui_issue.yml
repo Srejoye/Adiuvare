@@ -1,0 +1,71 @@
+name: TUI issue
+description: Report a visual, interaction, or operator-flow problem in the Textual UI
+title: "[TUI]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please attach a screenshot or short capture for TUI issues.
+
+        The screen state matters a lot here, so visual confirmation makes review much easier.
+  - type: textarea
+    id: summary
+    attributes:
+      label: What looks wrong?
+      placeholder: The Events detail panel drops the selected row after the list refreshes.
+    validations:
+      required: true
+  - type: dropdown
+    id: screen
+    attributes:
+      label: Screen
+      options:
+        - Monitor
+        - Events
+        - Config
+        - Signals
+        - AI Analyze
+        - AI Ask
+        - Audit
+        - Changes
+        - Multiple screens
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Launch adv
+        2. Open Events
+        3. Select a flagged row
+        4. Wait for auto refresh
+        5. Observe ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect instead?
+      placeholder: Selection should stay on the same row and the detail pane should remain in sync.
+    validations:
+      required: true
+  - type: textarea
+    id: visual
+    attributes:
+      label: Screenshot or recording
+      description: Paste image links or describe the attached media.
+      placeholder: Attached screenshot shows the selected row and the stale detail panel.
+    validations:
+      required: true
+  - type: dropdown
+    id: connection
+    attributes:
+      label: Runtime state
+      options:
+        - Connected to live runtime
+        - Offline / cached data
+        - Not sure
+    validations:
+      required: true
+
