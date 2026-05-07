@@ -1,4 +1,4 @@
-from .sqlalchemy import AdiuvareBlockError, check_statement
+from .sqlalchemy import check_statement
 
 
 def wrap_query(guard, execute):

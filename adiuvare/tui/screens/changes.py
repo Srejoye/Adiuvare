@@ -1,5 +1,5 @@
 import json
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
 from rich.text import Text
 from textual.app import ComposeResult
@@ -8,6 +8,9 @@ from textual.containers import Horizontal, Vertical, VerticalScroll
 from textual.widgets import Button, DataTable, Input, Static
 
 from ..workspace import PALETTE, WorkspaceView, styled_label, styled_separator
+
+if TYPE_CHECKING:
+    from ..app import AdiuvareApp
 
 
 class ChangesScreen(WorkspaceView):

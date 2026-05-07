@@ -1,4 +1,4 @@
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
 from textual.app import ComposeResult
 from textual.binding import Binding
@@ -6,6 +6,9 @@ from textual.containers import Horizontal, Vertical
 from textual.widgets import Button, Input, Select, Static
 
 from ..workspace import PALETTE, WorkspaceView
+
+if TYPE_CHECKING:
+    from ..app import AdiuvareApp
 
 
 BOOL_OPTIONS = [("True", "True"), ("False", "False")]

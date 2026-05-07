@@ -1,5 +1,5 @@
 from collections import Counter
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
 from textual.app import ComposeResult
 from textual.containers import Horizontal, Vertical
@@ -14,6 +14,9 @@ from ..workspace import (
     render_decision_bar,
     render_signal_bar,
 )
+
+if TYPE_CHECKING:
+    from ..app import AdiuvareApp
 
 
 class MonitorScreen(WorkspaceView):

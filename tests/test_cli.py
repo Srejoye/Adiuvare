@@ -1,7 +1,6 @@
 import sys
 import time
 from types import SimpleNamespace
-from pathlib import Path
 
 import yaml
 

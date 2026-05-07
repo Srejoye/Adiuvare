@@ -1,4 +1,4 @@
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
 from rich.text import Text
 from textual.app import ComposeResult
@@ -8,6 +8,9 @@ from textual.widgets import DataTable, Static
 from ...signals.context import ContextSignal
 from ...signals.ip_rep import IPRepSignal
 from ..workspace import PALETTE, WorkspaceView, render_signal_bar, sensitivity_color
+
+if TYPE_CHECKING:
+    from ..app import AdiuvareApp
 
 
 SIGNAL_ORDER = ("payload", "behavior", "identity", "context", "ip_rep")

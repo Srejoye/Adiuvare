@@ -1,5 +1,3 @@
-from pathlib import Path
-
 import pytest
 
 from adiuvare.config import SignalWeights, Thresholds, build_snapshot, find_config_file, load_config

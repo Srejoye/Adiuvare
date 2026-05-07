@@ -1,5 +1,5 @@
 from collections import Counter
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
 from rich.text import Text
 from textual.app import ComposeResult
@@ -18,6 +18,9 @@ from ..workspace import (
     styled_label,
     styled_separator,
 )
+
+if TYPE_CHECKING:
+    from ..app import AdiuvareApp
 
 
 class EventsScreen(WorkspaceView):

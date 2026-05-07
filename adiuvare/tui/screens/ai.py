@@ -1,4 +1,4 @@
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
 from textual.app import ComposeResult
 from textual.binding import Binding
@@ -14,6 +14,9 @@ from ..workspace import (
     render_signal_bar,
     styled_separator,
 )
+
+if TYPE_CHECKING:
+    from ..app import AdiuvareApp
 
 
 class AIScreen(WorkspaceView):
