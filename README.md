@@ -25,7 +25,7 @@ with a softer scored review pipeline.
 That lets you reject obviously hostile traffic early, keep inspecting the
 requests that still pass, and leave a local audit trail behind every decision.
 The same runtime can then be inspected locally through the `adv` CLI and the
-7-screen TUI.
+ TUI.
 
 It is a good fit when you want middleware-level protection, request scoring,
 operator controls, and runtime visibility in one place, with SQLite by default
