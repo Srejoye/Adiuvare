@@ -301,6 +301,15 @@ Adiuvare is in a good place for:
 There are still edges around distributed shared state and disconnected TUI
 semantics. Those are documented plainly in [docs/limitations.md](docs/limitations.md).
 
+## Payload coverage
+
+Payload scoring is currently strongest on common SQLi, XSS, and path traversal patterns along with nearby normalization variants.
+
+Known detection boundaries and false-positive cases are documented in:
+
+- docs/signals.md
+- docs/limitations.md
+
 ## Docs
 
 - [Quickstart](docs/quickstart.md)
