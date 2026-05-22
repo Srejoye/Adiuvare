@@ -1,4 +1,5 @@
 import pytest
+from pydantic import ValidationError
 
 from adiuvare.config import SignalWeights, Thresholds, build_snapshot, find_config_file, load_config
 from adiuvare.config.schema import AdiuvareConfig, PRESETS
@@ -180,7 +181,7 @@ def test_load_config_raises_for_yaml_boolean(tmp_path):
 
 def test_ai_config_rejects_invalid_mode():
     """A typo like 'assit' must raise ValidationError, not silently disable AI."""
-    with pytest.raises(Exception):  # pydantic ValidationError
+    with pytest.raises(ValidationError): 
         AdiuvareConfig(ai={"mode": "assit"})
 
 
@@ -195,5 +196,5 @@ def test_load_config_rejects_invalid_ai_mode_from_yaml(tmp_path):
     """A YAML file with an invalid ai.mode must fail on load, not silently."""
     cfg_path = tmp_path / "adiuvare.yaml"
     cfg_path.write_text("ai:\n  mode: assit\n", encoding="utf-8")
-    with pytest.raises(Exception):  # pydantic ValidationError
+    with pytest.raises(ValidationError):  
         load_config(cfg_path)
