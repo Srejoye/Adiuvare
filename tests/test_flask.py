@@ -389,3 +389,16 @@ def test_flask_policy_decorator_preserves_sync_route_handler():
 
     assert res.status_code == 200
     assert res.get_json() == {"ok": True}
+
+
+def test_threadsafe_identity_store_items():
+    store = ThreadSafeIdentityStore()
+
+    win = store.get("user1")
+    store.update("user1", win)
+
+    items = store.items()
+
+    assert isinstance(items, list)
+    assert len(items) == 1
+    assert items[0][0] == "user1"
