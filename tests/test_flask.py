@@ -441,7 +441,7 @@ def test_threadsafe_items_no_race_under_concurrent_writes():
     for t in threads:
         t.join()
 
-    assert errors == [], f"Concurrency errors detected:\n" + "\n".join(errors)
+    assert errors == [], "Concurrency errors detected:\n" + "\n".join(errors)
 
 
 def test_threadsafe_items_returns_all_identities():
