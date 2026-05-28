@@ -411,16 +411,18 @@ def test_threadsafe_items_no_race_under_concurrent_writes():
     items() must not raise RuntimeError when another thread calls bump()
     concurrently. This validates the _thread lock actually guards iteration.
     """
+    import queue
+
     store = ThreadSafeIdentityStore()
-    errors = []
-    iterations = 200
+    errors = queue.Queue()
+    iterations = 1000
 
     def writer():
         for i in range(iterations):
             try:
                 store.bump(f"identity-{i % 20}")
             except Exception as e:
-                errors.append(f"writer: {e}")
+                errors.put(f"writer: {e}")
 
     def reader():
         for _ in range(iterations):
@@ -428,7 +430,7 @@ def test_threadsafe_items_no_race_under_concurrent_writes():
                 result = store.items()
                 assert isinstance(result, list)
             except RuntimeError as e:
-                errors.append(f"reader: {e}")
+                errors.put(f"reader: {e}")
 
     threads = [
         threading.Thread(target=writer),
@@ -441,7 +443,11 @@ def test_threadsafe_items_no_race_under_concurrent_writes():
     for t in threads:
         t.join()
 
-    assert errors == [], "Concurrency errors detected:\n" + "\n".join(errors)
+    collected = []
+    while not errors.empty():
+        collected.append(errors.get())
+
+    assert collected == [], "Concurrency errors detected:\n" + "\n".join(collected)
 
 
 def test_threadsafe_items_returns_all_identities():
