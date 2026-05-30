@@ -39,8 +39,8 @@ def test_score_can_use_snapshot_weights():
         snap,
     )
 
-    assert round(score, 3) == 0.45
-    assert round(breakdown["payload"], 3) == 0.35
+    assert round(score, 3) == 0.393
+    assert round(breakdown["payload"], 3) == 0.304
 
 
 def test_verdict_gets_identity_nudge_inline():
@@ -53,3 +53,26 @@ def test_verdict_gets_identity_nudge_inline():
         block_threshold=0.80,
     )
     assert compute_verdict(0.50, snap, identity_risk=0.70) == "throttle"
+
+
+def test_all_signals_with_snap_do_not_exceed_expected_max():
+    snap = ConfigSnapshot(
+        payload_weight=0.40,
+        behavior_weight=0.35,
+        identity_weight=0.25,
+        flag_threshold=0.25,
+        throttle_threshold=0.55,
+        block_threshold=0.80,
+    )
+    score, breakdown = compute_score(
+        {
+            "payload":  SignalResult(score=1.0, reason="x"),
+            "behavior": SignalResult(score=1.0, reason="x"),
+            "identity": SignalResult(score=1.0, reason="x"),
+            "context":  SignalResult(score=1.0, reason="x"),
+            "ip_rep":   SignalResult(score=1.0, reason="x"),
+        },
+        snap,
+    )
+    assert score == 1.0
+    assert round(sum(breakdown.values()), 10) == 1.0

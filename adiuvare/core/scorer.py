@@ -19,6 +19,13 @@ def compute_score(sig_res: dict[str, SignalResult], snap=None) -> tuple[float, d
         weights["payload"] = snap.payload_weight
         weights["behavior"] = snap.behavior_weight
         weights["identity"] = snap.identity_weight
+        # When snap overrides the 3 main weights (summing to 1.0), context and
+        # ip_rep from _weights (0.10 + 0.05 = 0.15) are still added on top,
+        # inflating the total to 1.15. Normalize to keep the sum at 1.0.
+        # (issue #135: false positive blocks from weight arithmetic)
+        total_weight = sum(weights.values())
+        if total_weight > 0:
+            weights = {k: v / total_weight for k, v in weights.items()}
 
     for name, res in sig_res.items():
         weight = weights.get(name, 0.0)
